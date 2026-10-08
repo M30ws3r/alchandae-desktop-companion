@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alchandae Preview</title>
+<style>
+  :root { --bg: #f6f0e8; --fg: #2e2620; --sub: #87766a; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1f1b18; --fg: #eee; --sub: #a8988a; } }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--fg);
+         font-family: system-ui, "Malgun Gothic", sans-serif;
+         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+  #stage { position: relative; width: min(420px, 90vw); aspect-ratio: 1; transform-origin: 50% 100%;
+           transition: transform 60ms ease-out; user-select: none; }
+  #stage img { position: absolute; inset: 0; width: 100%; height: 100%; visibility: hidden; pointer-events: none; }
+  #stage img.on { visibility: visible; }
+  #hit { position: absolute; inset: 8% 4% 0 4%; cursor: pointer; }
+  #state { font-size: 14px; color: var(--sub); font-variant-numeric: tabular-nums; }
+  .hint { font-size: 13px; color: var(--sub); text-align: center; line-height: 1.6; padding: 0 16px; }
+  #typebox { width: min(420px, 90vw); box-sizing: border-box; font: inherit; font-size: 14px; padding: 8px 10px;
+             border-radius: 8px; border: 1px solid var(--sub); background: transparent; color: var(--fg); }
+</style>
+</head>
+<body>
+  <div id="stage"><div id="hit"></div></div>
+  <div id="state">working01</div>
+  <input id="typebox" placeholder="여기에 막 타이핑해 봐 (500타/분 이상 3초 유지 → 프렌지!)" autocomplete="off">
+  <div class="hint">타이핑 → working02 · working03 · working01 · brilliant 번갈아 · 500타/분 이상 유지 → workingFrenzy 고정<br>
+    캐릭터 클릭 → jamthought + 피아노 효과음 + 푸딩 출렁 · 15초 무입력 → singing + lofi 음악 반복</div>
+<script>
+const BASE = 'assets/alchandae/';
+const T = { poseMinMs: 700, fireCPM: 500, fireWindowMs: 3000, fireCheckMs: 200, dozeAfterMs: 15000, donutHoldMs: 1600 };
+const CYCLE = ['working02', 'working03', 'working01', 'brilliant'];
+const stage = document.getElementById('stage'), stateEl = document.getElementById('state');
+const el = {};
+for (const n of ['working02', 'working03', 'working01', 'brilliant', 'frenzy', 'jamthought', 'singing']) {
+  const i = new Image(); i.src = BASE + n + '.webp'; i.draggable = false; stage.prepend(i); el[n] = i;
+}
+let cur = null, base = 'working01', idx = -1, since = 0, presses = [], fire = false, donutUntil = 0, dozeT, fireT, revertT;
+const now = () => performance.now();
+const idleAudio = new Audio(BASE + 'idle.mp3'); idleAudio.loop = true; idleAudio.volume = 0.8;
+function show(n) {
+  if (cur) el[cur].classList.remove('on'); el[n].classList.add('on'); cur = n; label();
+  if (n === 'singing') { idleAudio.currentTime = 0; idleAudio.play().catch(() => {}); } else if (!idleAudio.paused) idleAudio.pause();
+}
+function cpm(t) { presses = presses.filter(p => t - p < T.fireWindowMs); return Math.round(presses.length * 60000 / T.fireWindowMs); }
+function label() { stateEl.textContent = `${cur}${fire ? ' 🔥' : ''} · ${cpm(now())} 타/분`; }
+function next(t) { idx = (idx + 1) % CYCLE.length; since = t; base = CYCLE[idx]; }
+function armDoze() { clearTimeout(dozeT); dozeT = setTimeout(() => { if (now() >= donutUntil) { fire = false; presses = []; show('singing'); } }, T.dozeAfterMs); }
+function bounce() { stage.style.transform = 'scaleY(0.97)'; setTimeout(() => stage.style.transform = '', 60); }
+function tick() {
+  const t = now();
+  if (fire && cpm(t) < T.fireCPM) { fire = false; idx = -1; next(t); if (t >= donutUntil && cur !== 'singing') show(base); }
+  if (fire) fireT = setTimeout(tick, T.fireCheckMs); else label();
+}
+addEventListener('keydown', e => {
+  if (e.repeat || ['Shift', 'Control', 'Alt', 'Meta', 'HangulMode', 'HanjaMode'].includes(e.key)) return;
+  const t = now(); armDoze(); presses.push(t);
+  if (cpm(t) >= T.fireCPM) { if (!fire) { fire = true; since = t; clearTimeout(fireT); fireT = setTimeout(tick, T.fireCheckMs); } base = 'frenzy'; }
+  else if (fire) { fire = false; idx = -1; next(t); }
+  else if (idx < 0 || t - since >= T.poseMinMs) next(t);
+  if (t >= donutUntil) { show(base); bounce(); } else label();
+});
+document.getElementById('hit').addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  armDoze(); donutUntil = now() + T.donutHoldMs; show('jamthought');
+  playClick();
+  const kf = [];
+  for (let f = 0; f <= 24; f++) { const t = f * 0.03, a = 0.11 * Math.exp(-t / 0.2), sy = 1 - a * Math.cos(2 * Math.PI * 4.2 * t); kf.push({ transform: `scale(${1 + (1 - sy) * 0.7}, ${sy})` }); }
+  stage.animate(kf, { duration: 720, easing: 'linear' });
+  clearTimeout(revertT); revertT = setTimeout(() => show(base), T.donutHoldMs);
+});
+let clickAudio = null;
+function playClick() {
+  const tryPlay = (srcs) => {
+    if (!srcs.length) return;
+    const s = new Audio(srcs[0]); s.volume = 0.9;
+    s.addEventListener('error', () => tryPlay(srcs.slice(1)), { once: true });
+    s.play().then(() => { if (clickAudio && clickAudio !== s) clickAudio.pause(); clickAudio = s; }).catch(() => {});
+  };
+  tryPlay(['click.mp3', 'click.wav', 'click.m4a', BASE + 'click.mp3']);
+}
+show('working01'); armDoze(); document.getElementById('typebox').focus();
+</script>
+</body>
+</html>

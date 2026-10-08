@@ -1,0 +1,5 @@
+*.exe
+build/
+# 음원은 라이선스 때문에 저장소에 올리지 않아요 (Releases의 exe에는 포함)
+app/sounds/*.wav
+assets/alchandae/*.mp3

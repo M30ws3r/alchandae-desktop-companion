@@ -1,0 +1,34 @@
+{
+  "name": "alchandae",
+  "appName": "알찬대 데스크톱 컴패니언",
+  "size": [600, 600],
+  "anchor": "bottom-center",
+  "sprites": {
+    "start": "working01.webp",
+    "typing": ["working02.webp", "working03.webp", "working01.webp", "brilliant.webp"],
+    "frenzy": "frenzy.webp",
+    "click": "jamthought.webp",
+    "idle": "singing.webp",
+    "clickSound": "click.mp3",
+    "idleMusic": "idle.mp3"
+  },
+  "timing": {
+    "poseMinMs": 700,
+    "fireCPM": 500,
+    "fireWindowMs": 3000,
+    "fireCheckMs": 200,
+    "idleAfterMs": 15000,
+    "clickHoldMs": 1600
+  },
+  "squash": { "scaleY": 0.97, "ms": 60 },
+  "jelly": {
+    "frames": 24,
+    "frameMs": 30,
+    "formula": "amp=0.11*exp(-t/0.2); scaleY=1-amp*cos(2π·4.2·t); scaleX=1+(1-scaleY)*0.7; anchor bottom-center"
+  },
+  "interaction": {
+    "leftClickOnCharacter": "jamthought + click sound + jelly",
+    "rightClickMenu": ["크기 조절", "종료"],
+    "resize": "drag outward = bigger, toward center = smaller"
+  }
+}
