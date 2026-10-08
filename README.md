@@ -93,7 +93,7 @@ $env:GOOS="windows"; $env:GOARCH="amd64"
 go build -trimpath -ldflags "-H windowsgui -s -w" -o "알찬대 데스크톱 컴패니언.exe" .
 ```
 
-- 음원 파일은 라이선스 때문에 저장소에 넣지 않았습니다(아무리 저작권 묻지 않는 NCM 음원이라고 해도 문제시 될 여지를 최소화하고자 했습니다.). `app/sounds/`에 `click.wav`, `idle.wav`를 넣고 빌드하면 들어가고, 없으면 클릭 시 내장 합성 효과음이 나고 쉴 때 음악은 나오지 않아요 ([`app/sounds/README.md`](app/sounds/README.md)).
+- 음원 파일은 라이선스 때문에 저장소에 넣지 않았습니다(아무리 저작권 묻지 않는 RFM(Royalty-Free-music) 음원이라고 해도 문제시 될 여지를 최소화하고자 했습니다.). `app/sounds/`에 `click.wav`, `idle.wav`를 넣고 빌드하면 들어가고, 없으면 클릭 시 내장 합성 효과음이 나고 쉴 때 음악은 나오지 않아요 ([`app/sounds/README.md`](app/sounds/README.md)).
 - 아이콘이나 프로그램 이름을 바꿨다면 `python tools/mksyso.py icon rsrc_windows_amd64.syso`로 리소스를 다시 만드세요.
 - 타이밍 값(500타 기준, 15초 등)은 `app/brain.go`의 `DefaultConfig()`에 있어요.
 
